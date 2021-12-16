@@ -50,17 +50,12 @@ getGridVal(Grid, RowIdx, ColIdx) ->
   Row = array:get(RowIdx, Grid),
   array:get(ColIdx, Row).
 
-updateNode(Weights, Size, {X, Y, Cost}) ->
-  if
-    (X >= 0) and (X < Size) and (Y >= 0) and (Y < Size) ->
-      NodeWeight = getGridVal(Weights, Y, X),
-      if 
-        Cost < NodeWeight ->
-          W = setGridVal(Weights, Y, X, Cost),
-          {W, [{X, Y, Cost}]};
-        true ->
-          {Weights, []}
-      end;
+updateNode(Weights, {X, Y, Cost}) ->
+  NodeWeight = getGridVal(Weights, Y, X),
+  if 
+    Cost < NodeWeight ->
+      W = setGridVal(Weights, Y, X, Cost),
+      {W, [{X, Y, Cost}]};
     true ->
       {Weights, []}
   end.
@@ -78,18 +73,17 @@ nodesToUpdate(_Graph, _Size, []) ->
 
 nodesToUpdate(Graph, Size, [P]) ->
   {X, Y, Cost} = P,
-  N = getCost(Graph, X+1, Y, Size, Cost)
-      ++ getCost(Graph, X-1, Y, Size, Cost)
-      ++ getCost(Graph, X, Y+1, Size, Cost)
-      ++ getCost(Graph, X, Y-1, Size, Cost),
-  N.
+  getCost(Graph, X+1, Y, Size, Cost)
+  ++ getCost(Graph, X-1, Y, Size, Cost)
+  ++ getCost(Graph, X, Y+1, Size, Cost)
+  ++ getCost(Graph, X, Y-1, Size, Cost).
 
 visitNode(_Graph, Weights, _Size, []) ->
   Weights;
 
 visitNode(Graph, Weights, Size, [ToCheck|Rem]) ->
-  { W, Updated } = updateNode(Weights, Size, ToCheck),
-  NewNodesToCheck = lists:keysort(3, Rem ++ nodesToUpdate(Graph, Size, Updated)),
+  { W, Updated } = updateNode(Weights, ToCheck),
+  NewNodesToCheck = lists:keymerge(3, Rem, lists:keysort(3, nodesToUpdate(Graph, Size, Updated))),
   visitNode(Graph, W, Size, NewNodesToCheck).
 
 partA(Lines) ->
